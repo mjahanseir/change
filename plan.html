@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#020617">
+    <title>Planning</title>
+    <link rel="icon"
+        href="https://raw.githubusercontent.com/mjahanseir/mjahanseir.github.io/refs/heads/master/learn/computer/pic/dev.ico"
+        type="image/x-icon">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        :root {
+            --blue: #2563eb;
+            --cyan: #06b6d4;
+            --green: #10b981;
+            --amber: #f59e0b;
+            --soft: #94a3b8;
+            --muted: #94a3b8;
+            --dim: #64748b;
+            --border: rgba(148, 163, 184, .14);
+            --panel: rgba(255, 255, 255, .035)
+        }
+
+        body {
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 18px;
+            color: var(--soft);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+            background: radial-gradient(circle at 20% 30%, #0b1f33, transparent 42%), radial-gradient(circle at 80% 60%, #0a3d62, transparent 42%), linear-gradient(135deg, #020617, #0f172a);
+            transition: background .55s ease, color .3s ease
+        }
+
+        button,
+        input {
+            font: inherit
+        }
+
+        button {
+            cursor: pointer
+        }
+
+        .wrapper {
+            width: min(1280px, 100%);
+            margin: auto;
+            text-align: center
+        }
+
+        .panel {
+            width: 100%;
+            padding: 13px;
+            background: rgba(255, 255, 255, .035);
+            border: 1px solid rgba(255, 255, 255, .11);
+            border-radius: 22px;
+            box-shadow: 0 20px 50px rgba(2, 6, 23, .3);
+            backdrop-filter: blur(20px)
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px
+        }
+
+        .column {
+            position: relative;
+            min-width: 0;
+            min-height: 260px;
+            padding: 10px;
+            color: var(--soft);
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            transition: transform .18s, border-color .18s, opacity .18s, box-shadow .18s
+        }
+
+        .column[draggable=true] {
+            cursor: grab
+        }
+
+        .column.dragging {
+            opacity: .4;
+            transform: scale(.97)
+        }
+
+        .column.drag-over {
+            border-color: #60a5fa;
+            box-shadow: inset 0 0 0 1px rgba(96, 165, 250, .45), 0 0 22px rgba(37, 99, 235, .16)
+        }
+
+        .drag-handle {
+            position: absolute;
+            top: 7px;
+            right: 35px;
+            color: #536277;
+            font-size: 15px;
+            line-height: 1;
+            user-select: none
+        }
+
+        .zoom-btn {
+            position: absolute;
+            top: 5px;
+            right: 7px;
+            z-index: 4;
+            display: grid;
+            place-items: center;
+            width: 25px;
+            height: 25px;
+            padding: 0;
+            color: #64748b;
+            background: rgba(15, 23, 42, .58);
+            border: 1px solid rgba(148, 163, 184, .13);
+            border-radius: 7px;
+            font-size: 13px;
+            line-height: 1
+        }
+
+        .zoom-btn:hover {
+            color: #fff;
+            border-color: #60a5fa;
+            background: rgba(37, 99, 235, .18)
+        }
+
+        .label {
+            margin-bottom: 6px;
+            color: var(--dim);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: .75px;
+            text-transform: uppercase
+        }
+
+        .clock-column {
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle at 50% 20%, rgba(96, 165, 250, .1), transparent 52%), var(--panel)
+        }
+
+        .clock-area {
+            display: grid;
+            grid-template-rows: auto 1fr auto auto;
+            flex: 1;
+            align-items: center;
+            min-height: 238px;
+            padding: 10px 7px
+        }
+
+        .clock-label {
+            align-self: start;
+            justify-self: center;
+            margin: 0;
+            color: var(--dim);
+            font-size: 9px;
+            font-weight: 750;
+            letter-spacing: .14em;
+            text-transform: uppercase
+        }
+
+        .clock-time {
+            align-self: center;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            color: #f8fafc;
+            font-size: clamp(4.05rem, 4.2vw, 4.15rem);
+            font-weight: 850;
+            line-height: .92;
+            letter-spacing: -3px;
+            font-variant-numeric: tabular-nums
+        }
+
+        .clock-seconds {
+            display: none
+        }
+
+        .clock-period {
+            margin-left: 8px;
+            color: #cbd5e1;
+            font-size: .95rem;
+            font-weight: 800;
+            text-transform: lowercase
+        }
+
+        .clock-date {
+            align-self: center;
+            margin-top: -50px;
+            color: #b4c0cf;
+            font-size: 16px;
+            font-weight: 500;
+            text-transform: uppercase
+        }
+
+        .clock-zone {
+            align-self: end;
+            margin-top: 8px;
+            color: var(--dim);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase
+        }
+
+        .month-column {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        .month-head {
+            display: grid;
+            grid-template-columns: 32px 1fr 32px;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 7px
+        }
+
+        .month-nav {
+            display: grid;
+            place-items: center;
+            width: 32px;
+            height: 30px;
+            color: #658cb9;
+            background: rgba(59, 130, 246, .045);
+            border: 1px solid rgba(96, 165, 250, .14);
+            border-radius: 8px;
+            font-size: 22px;
+            line-height: 1
+        }
+
+        .month-nav:hover {
+            color: #cbd5e1;
+            background: rgba(59, 130, 246, .12)
+        }
+
+        .current-month-title {
+            color: #cbd5e1;
+            font-size: 16px;
+            font-weight: 750;
+            white-space: nowrap
+        }
+
+        .month-swipe {
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none
+        }
+
+        .month-swipe::-webkit-scrollbar {
+            display: none
+        }
+
+        .month-track {
+            display: flex
+        }
+
+        .month-slide {
+            flex: 0 0 100%;
+            scroll-snap-align: start
+        }
+
+        .current-weekdays,
+        .current-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr)
+        }
+
+        .current-weekdays {
+            margin-bottom: 4px
+        }
+
+        .current-weekdays div {
+            display: grid;
+            place-items: center;
+            height: 19px;
+            color: var(--dim);
+            font-size: 9px;
+            font-weight: 800
+        }
+
+        .current-days {
+            gap: 2px
+        }
+
+        .current-day {
+            display: grid;
+            place-items: center;
+            min-height: 25px;
+            color: var(--muted);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 650
+        }
+
+        .empty {
+            visibility: hidden
+        }
+
+        .weekend:not(.today):not(.start):not(.target) {
+            color: #54759c
+        }
+
+        .today {
+            color: #fff !important;
+            font-weight: 900 !important;
+            background: linear-gradient(135deg, var(--blue), var(--cyan))
+        }
+
+        .start:not(.today) {
+            color: #fff !important;
+            font-weight: 900 !important;
+            background: var(--amber)
+        }
+
+        .target:not(.today) {
+            color: #fff !important;
+            font-weight: 900 !important;
+            background: var(--green)
+        }
+
+        .date-controls {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+            margin-top: 8px
+        }
+
+        .date-field {
+            height: 38px;
+            padding: 3px 7px;
+            text-align: left;
+            background: rgba(255, 255, 255, .025);
+            border: 1px solid var(--border);
+            border-radius: 8px
+        }
+
+        .date-field label {
+            display: block;
+            color: var(--dim);
+            font-size: 7px;
+            font-weight: 800;
+            text-transform: uppercase
+        }
+
+        .date-field input {
+            width: 100%;
+            height: 21px;
+            padding: 0;
+            color: var(--muted);
+            color-scheme: dark;
+            background: transparent;
+            border: 0;
+            outline: 0;
+            font-size: 10px
+        }
+
+        .status-column {
+            display: flex;
+            flex-direction: column
+        }
+
+        .status-area {
+            padding: 5px 2px 9px;
+            border-bottom: 1px solid rgba(148, 163, 184, .11)
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 9px
+        }
+
+        .status-value {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: #a8b3c3;
+            font-size: 16px;
+            font-weight: 750
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--blue);
+            border-radius: 50%
+        }
+
+        .status-dot.not-started {
+            background: var(--amber)
+        }
+
+        .status-dot.completed {
+            background: var(--green)
+        }
+
+        .percentage {
+            color: #60a5fa;
+            font-size: 2.35rem;
+            font-weight: 850
+        }
+
+        .power-gauge {
+            position: relative;
+            width: 170px;
+            height: 93px;
+            margin: 10px auto 5px;
+            overflow: hidden
+        }
+
+        .gauge-arc {
+            position: absolute;
+            left: 5px;
+            top: 5px;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: conic-gradient(from 270deg, var(--blue) 0deg calc(var(--elapsed)*1.8deg), var(--green) calc(var(--elapsed)*1.8deg) 180deg, transparent 180deg 360deg)
+        }
+
+        .gauge-cutout {
+            position: absolute;
+            left: 27px;
+            top: 27px;
+            width: 116px;
+            height: 116px;
+            border-radius: 50%;
+            background: #101b2d
+        }
+
+        .gauge-value {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 13px;
+            color: #e2e8f0;
+            font-size: 22px;
+            font-weight: 850
+        }
+
+        .gauge-caption {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            gap: 13px;
+            font-size: 7px;
+            font-weight: 750;
+            text-transform: uppercase
+        }
+
+        .gauge-caption .elapsed {
+            color: #60a5fa
+        }
+
+        .gauge-caption .remaining {
+            color: #34d399
+        }
+
+        .progress-section {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding-top: 4px
+        }
+
+        .progress-heading {
+            margin-bottom: 7px;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: left
+        }
+
+        .progress-track {
+            position: relative;
+            height: 28px;
+            padding: 3px;
+            overflow: hidden;
+            background: rgba(226, 232, 240, .11);
+            border: 1px solid var(--border);
+            border-radius: 999px
+        }
+
+        .progress-bar {
+            width: 0;
+            height: 100%;
+            background: linear-gradient(90deg, var(--blue), #3b82f6, var(--cyan));
+            border-radius: inherit
+        }
+
+        .progress-inside {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 850;
+            text-shadow: 0 1px 5px rgba(2, 6, 23, .8);
+            pointer-events: none
+        }
+
+        .progress-dates {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 7px;
+            color: var(--dim);
+            font-size: 9px
+        }
+
+        .metric-column {
+            display: grid;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 7px
+        }
+
+        .metric {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 9px;
+            background: rgba(255, 255, 255, .028);
+            border: 1px solid var(--border);
+            border-radius: 12px
+        }
+
+        .metric-info {
+            display: flex;
+            align-items: center;
+            gap: 7px
+        }
+
+        .metric-icon {
+            display: grid;
+            place-items: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px
+        }
+
+        .metric-label {
+            font-size: 11px
+        }
+
+        .metric-value {
+            display: flex;
+            align-items: baseline;
+            gap: 3px
+        }
+
+        .metric-value strong {
+            font-size: 32px
+        }
+
+        .metric-value span {
+            font-size: 10px;
+            text-transform: uppercase
+        }
+
+        footer {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            color: #64748b;
+            font-size: 10px;
+            font-weight: 500;
+            opacity: .42
+        }
+
+        .theme-switcher {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px
+        }
+
+        .theme-dot {
+            width: 10px;
+            height: 10px;
+            padding: 0;
+            border: 0;
+            border-radius: 50%;
+            box-shadow: none;
+            outline: none;
+            opacity: .72;
+            transition: opacity .15s ease, transform .15s ease
+        }
+
+        .theme-dot:hover {
+            opacity: 1;
+            transform: scale(1.08)
+        }
+
+        .theme-dot.active {
+            opacity: 1;
+            border: 0;
+            box-shadow: none;
+            outline: 1px solid rgba(255, 255, 255, .35);
+            outline-offset: 2px
+        }
+
+        .theme-midnight {
+            background: #087ea4
+        }
+
+        .theme-aurora {
+            background: #8b5cf6
+        }
+
+        .theme-emerald {
+            background: #10b981
+        }
+
+        .theme-sunset {
+            background: #f97316
+        }
+
+        .theme-graphite {
+            background: #64748b
+        }
+
+        .zoom-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            place-items: center;
+            padding: 28px;
+            background: rgba(2, 6, 23, .82);
+            backdrop-filter: blur(14px)
+        }
+
+        .zoom-overlay.open {
+            display: grid
+        }
+
+        .zoom-card {
+            position: relative;
+            width: min(900px, 92vw);
+            height: min(680px, 88vh);
+            padding: 28px;
+            overflow: auto;
+            color: var(--soft);
+            background: linear-gradient(145deg, rgba(15, 32, 50, .98), rgba(8, 20, 35, .98));
+            border: 1px solid rgba(148, 163, 184, .22);
+            border-radius: 26px;
+            box-shadow: 0 35px 100px rgba(0, 0, 0, .55)
+        }
+
+        .zoom-card .column {
+            height: 100%;
+            min-height: 100%;
+            border: 0;
+            background: transparent
+        }
+
+        .zoom-card .drag-handle,
+        .zoom-card .zoom-btn {
+            display: none
+        }
+
+        .zoom-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 10;
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            color: #cbd5e1;
+            background: rgba(15, 23, 42, .85);
+            border: 1px solid rgba(148, 163, 184, .22);
+            border-radius: 50%;
+            font-size: 22px
+        }
+
+        .zoom-close:hover {
+            color: #fff;
+            background: rgba(190, 18, 60, .28)
+        }
+
+        body.modal-open {
+            overflow: hidden
+        }
+
+        @media(max-width:1060px) {
+            body {
+                display: block
+            }
+
+            .wrapper {
+                margin: 30px auto
+            }
+
+            .dashboard {
+                grid-template-columns: repeat(2, 1fr)
+            }
+        }
+
+        @media(max-width:700px) {
+            body {
+                display: grid;
+                padding: 9px
+            }
+
+            .wrapper {
+                margin: auto
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr
+            }
+
+            .column {
+                min-height: 260px
+            }
+
+            .zoom-overlay {
+                padding: 10px
+            }
+
+            .zoom-card {
+                width: 96vw;
+                height: 92vh;
+                padding: 18px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <main>
+            <section class="panel">
+                <div id="dashboard" class="dashboard">
+                    <div class="column clock-column" draggable="true" data-card="clock"><span
+                            class="drag-handle">⠿</span><button class="zoom-btn" type="button"
+                            title="Full screen">⛶</button>
+                        <div class="clock-area">
+                            <p class="clock-label">Local Time</p>
+                            <div class="clock-time"><span id="clockMain">00:00</span><span id="clockSeconds"
+                                    class="clock-seconds">00</span><span id="clockPeriod" class="clock-period">AM</span>
+                            </div>
+                            <p id="clockDate" class="clock-date"></p>
+                            <p class="clock-zone">Saskatoon</p>
+                        </div>
+                    </div>
+                    <div class="column month-column" draggable="true" data-card="month"><span
+                            class="drag-handle">⠿</span><button class="zoom-btn" type="button"
+                            title="Full screen">⛶</button>
+                        <p class="label">Month</p>
+                        <div class="month-head"><button id="monthPrev" class="month-nav" type="button">‹</button>
+                            <h3 id="monthTitle" class="current-month-title"></h3><button id="monthNext"
+                                class="month-nav" type="button">›</button>
+                        </div>
+                        <div id="monthSwipe" class="month-swipe">
+                            <div id="monthTrack" class="month-track"></div>
+                        </div>
+                        <div class="date-controls">
+                            <div class="date-field"><label>Start Date</label><input id="startDate" type="date"
+                                    value="2026-10-26"></div>
+                            <div class="date-field"><label>Target Date</label><input id="targetDate" type="date"
+                                    value="2027-05-01"></div>
+                        </div>
+                    </div>
+                    <div class="column status-column" draggable="true" data-card="status"><span
+                            class="drag-handle">⠿</span><button class="zoom-btn" type="button"
+                            title="Full screen">⛶</button>
+                        <div class="status-area">
+                            <p class="label">Current Status</p>
+                            <div class="status-row">
+                                <div class="status-value"><span id="statusDot" class="status-dot"></span><span
+                                        id="statusText"></span></div><span id="percentage"
+                                    class="percentage">0.0%</span>
+                            </div>
+                        </div>
+                        <div class="power-gauge">
+                            <div id="combinedGauge" class="gauge-arc" style="--elapsed:0"></div>
+                            <div class="gauge-cutout"></div>
+                            <div id="combinedGaugeText" class="gauge-value">0.0%</div>
+                            <div class="gauge-caption"><span class="elapsed">Elapsed</span><span
+                                    class="remaining">Remaining</span></div>
+                        </div>
+                        <div class="progress-section">
+                            <div class="progress-heading">Overall Progress</div>
+                            <div class="progress-track">
+                                <div id="progressBar" class="progress-bar"></div><span id="progressInside"
+                                    class="progress-inside">0.0%</span>
+                            </div>
+                            <div class="progress-dates"><span id="startLabel"></span><span id="targetLabel"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column metric-column" draggable="true" data-card="metrics"><span
+                            class="drag-handle">⠿</span><button class="zoom-btn" type="button"
+                            title="Full screen">⛶</button>
+                        <div class="metric">
+                            <div class="metric-info"><span class="metric-icon">◷</span><span class="metric-label">Total
+                                    Duration</span></div>
+                            <div class="metric-value"><strong id="totalDays">0</strong><span>Days</span></div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-info"><span class="metric-icon">✓</span><span class="metric-label">Days
+                                    Passed</span></div>
+                            <div class="metric-value"><strong id="passedDays">0</strong><span>Days</span></div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-info"><span class="metric-icon">→</span><span class="metric-label">Days
+                                    Remaining</span></div>
+                            <div class="metric-value"><strong id="remainingDays">0</strong><span>Days</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <footer><span>© <span id="year"></span> Planning by Mo with ❤️</span>
+            <div class="theme-switcher" aria-label="Choose dashboard theme"><button
+                    class="theme-dot theme-midnight active" type="button" data-theme="midnight"
+                    title="Midnight Blue"></button><button class="theme-dot theme-aurora" type="button"
+                    data-theme="aurora" title="Aurora Purple"></button><button class="theme-dot theme-emerald"
+                    type="button" data-theme="emerald" title="Emerald"></button><button class="theme-dot theme-sunset"
+                    type="button" data-theme="sunset" title="Sunset"></button><button class="theme-dot theme-graphite"
+                    type="button" data-theme="graphite" title="Graphite"></button></div>
+        </footer>
+    </div>
+    <div id="zoomOverlay" class="zoom-overlay">
+        <div class="zoom-card"><button id="zoomClose" class="zoom-close" type="button" aria-label="Close">×</button>
+            <div id="zoomContent"></div>
+        </div>
+    </div>
+    <script>
+        "use strict";
+        const DAY = 86400000, $ = id => document.getElementById(id), months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], today = () => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12) }, parse = v => { if (!v) return null; const [y, m, d] = v.split("-").map(Number); return new Date(y, m - 1, d, 12) }, same = (x, y, m, d) => x && x.getFullYear() === y && x.getMonth() === m && x.getDate() === d, fmt = d => new Intl.DateTimeFormat("en-CA", { month: "short", day: "numeric", year: "numeric" }).format(d);
+        let monthIndex = 12;
+        function updateClock() { const n = new Date(), p = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Regina", hour: "2-digit", minute: "2-digit", hour12: true }).formatToParts(n), g = t => p.find(x => x.type === t)?.value || ""; $("clockMain").textContent = `${g("hour")}:${g("minute")}`; $("clockPeriod").textContent = g("dayPeriod"); $("clockDate").textContent = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Regina", weekday: "long", month: "short", day: "numeric", year: "numeric" }).format(n) }
+        function buildDays(box, y, m, cls, start, target) { const now = today(), off = (new Date(y, m, 1).getDay() + 6) % 7, count = new Date(y, m + 1, 0).getDate(); for (let i = 0; i < off; i++) { const e = document.createElement("span"); e.className = cls + " empty"; box.appendChild(e) } for (let d = 1; d <= count; d++) { const e = document.createElement("span"), wd = new Date(y, m, d).getDay(); e.className = cls; e.textContent = d; if (wd === 0 || wd === 6) e.classList.add("weekend"); if (same(start, y, m, d)) e.classList.add("start"); if (same(target, y, m, d)) e.classList.add("target"); if (same(now, y, m, d)) e.classList.add("today"); box.appendChild(e) } }
+        function createMonthSlide(date, start, target) { const slide = document.createElement("div"); slide.className = "month-slide"; slide.dataset.year = date.getFullYear(); slide.dataset.month = date.getMonth(); slide.innerHTML = `<div class="current-weekdays">${weekdays.map(x => `<div>${x}</div>`).join("")}</div><div class="current-days"></div>`; buildDays(slide.querySelector(".current-days"), date.getFullYear(), date.getMonth(), "current-day", start, target); return slide }
+        function renderMonths(keepIndex = true) { const now = today(), start = parse($("startDate").value), target = parse($("targetDate").value), track = $("monthTrack"), frag = document.createDocumentFragment(), wanted = keepIndex ? monthIndex : 12; for (let i = -12; i <= 24; i++) { const d = new Date(now.getFullYear(), now.getMonth() + i, 1); frag.appendChild(createMonthSlide(d, start, target)) } track.replaceChildren(frag); monthIndex = Math.max(0, Math.min(36, wanted)); requestAnimationFrame(() => goToMonth(monthIndex, false)) }
+        function goToMonth(index, smooth = true) { const slides = [...document.querySelectorAll(".month-slide")]; monthIndex = Math.max(0, Math.min(slides.length - 1, index)); const slide = slides[monthIndex]; if (!slide) return; $("monthTitle").textContent = `${months[Number(slide.dataset.month)]} ${slide.dataset.year}`; $("monthSwipe").scrollTo({ left: slide.offsetLeft, behavior: smooth ? "smooth" : "auto" }) }
+        function syncMonthFromScroll() { const swipe = $("monthSwipe"), slides = [...document.querySelectorAll(".month-slide")]; if (!slides.length) return; monthIndex = Math.max(0, Math.min(slides.length - 1, Math.round(swipe.scrollLeft / swipe.clientWidth))); const slide = slides[monthIndex]; $("monthTitle").textContent = `${months[Number(slide.dataset.month)]} ${slide.dataset.year}` }
+        function setStatus(now, start, target) { const text = now < start ? "Not started" : now >= target ? "Completed" : "In progress"; $("statusText").textContent = text; $("statusDot").className = "status-dot" + (text === "Not started" ? " not-started" : text === "Completed" ? " completed" : "") }
+        function render() { const start = parse($("startDate").value), target = parse($("targetDate").value), now = today(); if (!start || !target || target <= start) return; const total = Math.round((target - start) / DAY), passed = Math.max(0, Math.min(total, Math.round((now - start) / DAY))), remaining = total - passed, progress = Math.max(0, Math.min(100, passed / total * 100)); setStatus(now, start, target); const percentage = progress.toFixed(1) + "%"; $("percentage").textContent = percentage; $("progressInside").textContent = percentage; $("progressBar").style.width = progress + "%"; $("combinedGauge").style.setProperty("--elapsed", progress); $("combinedGaugeText").textContent = percentage; $("startLabel").textContent = fmt(start); $("targetLabel").textContent = fmt(target); $("totalDays").textContent = total; $("passedDays").textContent = passed; $("remainingDays").textContent = remaining; renderMonths(true) }
+        function restoreOrder() { const saved = JSON.parse(localStorage.getItem("changeDashboardOrder") || "null"); if (!saved) return; const board = $("dashboard"); saved.forEach(id => { const card = board.querySelector(`[data-card="${id}"]`); if (card) board.appendChild(card) }) }
+        function saveOrder() { localStorage.setItem("changeDashboardOrder", JSON.stringify([...document.querySelectorAll("#dashboard>.column")].map(card => card.dataset.card))) }
+        function enableDrag() { const board = $("dashboard"); let dragged = null; board.addEventListener("dragstart", e => { if (e.target.closest("button,input")) { e.preventDefault(); return } const card = e.target.closest(".column"); if (!card) return; dragged = card; card.classList.add("dragging"); e.dataTransfer.effectAllowed = "move" }); board.addEventListener("dragover", e => { e.preventDefault(); const target = e.target.closest(".column"); board.querySelectorAll(".drag-over").forEach(x => x.classList.remove("drag-over")); if (target && target !== dragged) target.classList.add("drag-over") }); board.addEventListener("drop", e => { e.preventDefault(); const target = e.target.closest(".column"); if (!dragged || !target || target === dragged) return; const cards = [...board.children]; cards.indexOf(dragged) < cards.indexOf(target) ? target.after(dragged) : target.before(dragged); saveOrder() }); board.addEventListener("dragend", () => { board.querySelectorAll(".dragging,.drag-over").forEach(x => x.classList.remove("dragging", "drag-over")); dragged = null }) }
+        function openZoom(card) { const clone = card.cloneNode(true); clone.removeAttribute("draggable"); clone.querySelectorAll("[id]").forEach(el => el.removeAttribute("id")); $("zoomContent").replaceChildren(clone); $("zoomOverlay").classList.add("open"); document.body.classList.add("modal-open") }
+        function closeZoom() { $("zoomOverlay").classList.remove("open"); document.body.classList.remove("modal-open"); $("zoomContent").replaceChildren() }
+        const themes = { midnight: { background: "radial-gradient(circle at 20% 30%,#0b1f33,transparent 42%),radial-gradient(circle at 80% 60%,#0a3d62,transparent 42%),linear-gradient(135deg,#020617,#0f172a)", blue: "#2563eb", cyan: "#06b6d4", green: "#10b981" }, aurora: { background: "radial-gradient(circle at 18% 25%,#312e81,transparent 40%),radial-gradient(circle at 82% 65%,#701a75,transparent 42%),linear-gradient(135deg,#07111f,#1e1b4b)", blue: "#6366f1", cyan: "#a855f7", green: "#22d3ee" }, emerald: { background: "radial-gradient(circle at 20% 30%,#064e3b,transparent 42%),radial-gradient(circle at 80% 60%,#14532d,transparent 42%),linear-gradient(135deg,#02150f,#052e24)", blue: "#059669", cyan: "#34d399", green: "#22c55e" }, sunset: { background: "radial-gradient(circle at 20% 30%,#7f1d1d,transparent 42%),radial-gradient(circle at 80% 60%,#9f1239,transparent 42%),linear-gradient(135deg,#1c0b18,#431407)", blue: "#f97316", cyan: "#fb7185", green: "#f59e0b" }, graphite: { background: "radial-gradient(circle at 20% 30%,#1e293b,transparent 42%),radial-gradient(circle at 80% 60%,#334155,transparent 42%),linear-gradient(135deg,#09090b,#111827)", blue: "#64748b", cyan: "#94a3b8", green: "#cbd5e1" } };
+        function applyTheme(name, save = true) { const theme = themes[name] || themes.midnight; document.body.style.background = theme.background; document.documentElement.style.setProperty("--blue", theme.blue); document.documentElement.style.setProperty("--cyan", theme.cyan); document.documentElement.style.setProperty("--green", theme.green); document.querySelectorAll(".theme-dot").forEach(button => button.classList.toggle("active", button.dataset.theme === name)); if (save) localStorage.setItem("changeDashboardTheme", name) }
+        document.addEventListener("click", e => { const zoom = e.target.closest(".zoom-btn"); if (zoom) { e.stopPropagation(); openZoom(zoom.closest(".column")); return } const theme = e.target.closest(".theme-dot"); if (theme) applyTheme(theme.dataset.theme) }); $("zoomClose").onclick = closeZoom; $("zoomOverlay").addEventListener("click", e => { if (e.target === $("zoomOverlay")) closeZoom() }); document.addEventListener("keydown", e => { if (e.key === "Escape") closeZoom() }); $("monthPrev").onclick = () => goToMonth(monthIndex - 1); $("monthNext").onclick = () => goToMonth(monthIndex + 1); $("monthSwipe").addEventListener("scroll", () => requestAnimationFrame(syncMonthFromScroll)); $("startDate").onchange = render; $("targetDate").onchange = render; $("year").textContent = new Date().getFullYear(); restoreOrder(); enableDrag(); applyTheme(localStorage.getItem("changeDashboardTheme") || "midnight", false); updateClock(); setInterval(updateClock, 1000); renderMonths(false); render();
+    </script>
+</body>
+
+</html>
